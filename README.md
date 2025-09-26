@@ -1,7 +1,6 @@
 # ⚽ Plataforma de Scout de Futebol (Football Scout Platform)
 
-![Imagem da Aplicação](link_para_uma_imagem_da_sua_app.png)
-*Substitua o link acima por uma captura de tela da sua aplicação em funcionamento.*
+![Imagem da Aplicação](imgs/print.jpeg)
 
 ## 🚀 Sobre o Projeto
 

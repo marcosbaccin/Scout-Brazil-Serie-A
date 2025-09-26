@@ -1,0 +1,28 @@
+# Ambientes Virtuais
+.venv/
+venv/
+env/
+
+# Arquivos de Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Arquivos gerados pelo Scrapy
+.scrapy
+
+# Arquivos de configuração de IDEs/Editores
+.vscode/
+.idea/
+
+# Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de log
+*.log
+
+# Relatórios de Teste e Cobertura
+.coverage
+htmlcov/

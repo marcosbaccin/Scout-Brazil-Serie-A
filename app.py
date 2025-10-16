@@ -75,7 +75,7 @@ def render_scout_page(df, descriptions):
             Esta é uma ferramenta interativa para análise e descoberta de jogadores de futebol, utilizando dados estatísticos detalhados.
             #### Como Usar:
             1.  **Filtros Gerais:** Use os filtros de identificação (idade, posição, etc.).
-            2.  **Filtros Específicos:** Abra as seções de estatísticas e ajuste os sliders para definir valores mínimos.
+            2.  **Filtros Específicos:** Abra as seções de estatísticas e ajuste os sliders para definir um **intervalo (mínimo e máximo)**.
             3.  **Dicas:** Passe o mouse sobre qualquer slider para ver a descrição do atributo.
             4.  **Pesquisar:** Após configurar os filtros, clique em **"Executar Pesquisa"**.
             5.  **Analisar:** Navegue pelos resultados e clique em um jogador para expandir sua ficha detalhada.
@@ -95,6 +95,14 @@ def render_scout_page(df, descriptions):
         "PLAYING TIME": "Playing_Time", "POSSESSION": "Possession", "SHOOTING": "Shooting"
     }
     
+    # Coletar todas as colunas de estatísticas que terão um slider
+    all_stat_cols = []
+    for cat_prefix in CATEGORIES.values():
+        all_stat_cols.extend([
+            col for col in df.columns 
+            if col.startswith(cat_prefix) and pd.api.types.is_numeric_dtype(df[col])
+        ])
+
     if not df.empty:
         with st.form(key='filter_form'):
             with st.expander("🔎 DADOS DE IDENTIFICAÇÃO", expanded=True):
@@ -111,20 +119,32 @@ def render_scout_page(df, descriptions):
                         for col_name in relevant_cols:
                             help_text = descriptions.get(col_name, "Descrição não disponível.")
                             max_val = float(df[col_name].max())
+                            # --- ALTERAÇÃO 1: Mudar de slider simples para slider de intervalo ---
+                            # O valor padrão agora é uma tupla (mínimo, máximo) para criar um range slider
                             st.slider(label=col_name.replace(cat_prefix + '_', '').replace('_', ' ').title(),
-                                      min_value=0.0, max_value=max_val, value=0.0,
-                                      help=help_text, key=col_name)
+                                      min_value=0.0, 
+                                      max_value=max_val, 
+                                      value=(0.0, max_val), # Define o slider como um intervalo
+                                      help=help_text, 
+                                      key=col_name)
             search_button = st.form_submit_button(label='Executar Pesquisa', use_container_width=True, type="primary")
         
         if search_button:
             filtered_df = df.copy()
+            
+            # Filtros de identificação (idade agora também usa 'between')
             filtered_df = filtered_df[filtered_df['age'].between(age_val[0], age_val[1])]
             if nat_val: filtered_df = filtered_df[filtered_df['nationality'].str.contains('|'.join(re.escape(n) for n in nat_val), na=False)]
             if pos_val: filtered_df = filtered_df[filtered_df['position'].str.contains('|'.join(re.escape(p) for p in pos_val), na=False)]
             if team_val: filtered_df = filtered_df[filtered_df['team'].isin(team_val)]
-            for key, value in st.session_state.items():
-                if key in df.columns and value > 0:
-                    filtered_df = filtered_df[filtered_df[key] >= value]
+
+            # --- ALTERAÇÃO 2: Nova lógica para filtrar com base no intervalo do slider ---
+            for col_name in all_stat_cols:
+                if col_name in st.session_state:
+                    min_filter, max_filter = st.session_state[col_name]
+                    # Aplica o filtro 'between' para cada atributo estatístico
+                    filtered_df = filtered_df[filtered_df[col_name].between(min_filter, max_filter)]
+
             st.session_state.scout_results = filtered_df
             st.session_state.scout_page_number = 0
         
